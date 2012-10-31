@@ -1,7 +1,9 @@
 -module(chatroom).
 
 %% Public API:
--export([start_link/1, global_chatroom/0]).
+-export([start_link/1,
+         local_chatroom/0,
+         global_chatroom/0]).
 
 %% For spawning:
 -export([init/1]).
