@@ -19,6 +19,9 @@
 start_link(Name) ->
     proc_lib:start_link(?MODULE, init, [Name]).
 
+local_chatroom() ->
+    whereis(chatroom).
+
 global_chatroom() ->
     global:whereis_name(chatroom).
 
@@ -31,8 +34,8 @@ init(Name) ->
             ok;
         {global, GName} ->
             yes = global:register_name(GName, self());
-        {local,Name} ->
-            erlang:register(Name, self())
+        {local,LName} ->
+            erlang:register(LName, self())
     end,
     proc_lib:init_ack(self()),
     loop(#state{subscribers=[]}).
