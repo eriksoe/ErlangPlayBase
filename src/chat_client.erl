@@ -2,6 +2,9 @@
 
 -export([start/1]).
 
+%% Synopsis:
+%% chat_client:start(chatroom:local_chatroom()).
+
 start(Chatroom) ->
     OutPid = proc_lib:spawn_link(fun() -> output_init(Chatroom) end),
     input_loop(Chatroom, OutPid).
