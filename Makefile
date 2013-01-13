@@ -9,11 +9,14 @@ compile:
 clean:
 	-rm ebin/*.beam test/*.beam
 
+shell:
+	erl -sname chat -pa ebin
+
 start: compile
-	erl -boot start_sasl -pa ebin -eval 'chatroom:start_link({local,chatroom}).'
+	erl -boot start_sasl -sname chat -pa ebin -eval 'chatroom:start_link({local,chatroom}).'
 
 start_global: compile
-	erl -boot start_sasl -pa ebin -eval 'chatroom:start_link({global,chatroom}).'
+	erl -boot start_sasl -sname chat -pa ebin -eval 'chatroom:start_link({global,chatroom}).'
 
 test: compile
 	erl -noshell -pa ebin test -eval 'chatroom_crude_test:test(), init:stop().'

@@ -1,128 +1,115 @@
 -module(chatroom_sup).
--compile([export_all]).
+-export([start_link/0, init/0, loop/3]).
 
-talk(Msg) ->
-    common_room ! Msg.
+-define(FULL_BURST_TANK, 2).
+-define(REFILL_RATE, 10000).
+-define(ROOM_NAME, common_room).
 
-start() ->
-    Sup = spawn(?MODULE, init, [common_room, self()]),
-    receive
-	{started, Sup} ->
-	    {ok, Sup}
-    after
-	100 ->
-	    exit(Sup, kill),
-	    {error, timeout}
+start_link() ->
+    proc_lib:start_link(?MODULE, init, []).
+
+bot_specs(Room) ->
+    [{echo_bot, start_link, Room},
+     {alarm_bot, start_link, Room}].
+
+init() ->
+    erlang:process_flag(trap_exit, true),
+    %% TODO global registration
+    true = erlang:register(?MODULE, self()),
+    proc_lib:init_ack(self()),
+    start_the_common_room(?FULL_BURST_TANK).
+
+start_the_common_room(BurstTank) ->
+    Room = chatroom:start_link({local, ?ROOM_NAME}),
+    ?MODULE:loop(BurstTank, Room, restart_bots(bot_specs(Room))).
+
+restart_bots(BotSpecs) ->
+    [maybe_start_bot(BotSpec) || BotSpec <- BotSpecs].
+
+maybe_start_bot({M,F,A}) ->
+    io:format("Starting bot: ~p, ~p, ~p~n", [M,F,A]),
+    case M:F(A) of
+	{ok, Pid} ->
+	    {Pid, M,F,A};
+	Pid when is_pid(Pid) -> 
+	    {Pid, M,F,A}
+    end;
+maybe_start_bot({Pid, M,F,A} = Bot) when is_pid(Pid) ->
+    case is_process_alive(Pid) of
+	true ->
+	    Bot;
+	false ->
+	    maybe_start_bot({M,F,A})
     end.
 
-stop() ->
-    ?MODULE ! shutdown.
-
-init(_Name, Parent) ->
-    erlang:process_flag(trap_exit, true),
-    true = erlang:register(?MODULE, self()),
-    Parent ! {started, self()},
-    init_common_room().
-
-init_common_room() ->
-    Room = chatroom:start_link({local, common_room}),
-    init_echo(Room).
-
-init_echo(Room) ->
-    Echo = echo(),
-    ?MODULE:loop({Room, Echo}).
-
-loop({Room, Echo}) ->
+loop(BurstTank, Room, Bots) ->
     receive
-	shutdown ->
-	    exit(Room, shutdown),
-	    exit(Echo, shutdown);
-	{'EXIT', Echo, Reason} ->
-	    io:format("Echo crashed with reason: ~p.  Restarting Echo~n", [Reason]),
-	    ?MODULE:init_echo(Room);
-	{'EXIT', Room, Reason} ->
-	    io:format("The common room crashed with reason: ~p.  Killing Echo and restarting~n", [Reason]),
-	    unlink(Echo),
-	    exit(Echo, kill),
-	    ?MODULE:init_common_room();
 	{'EXIT', Pid, Reason} ->
-	    io:format("Exit from unknown process: ~p, with reason: ~p~n", [Pid, Reason]),
-	    ?MODULE:loop({Room, Echo});
+	    case empty(BurstTank) of
+		yes ->
+		    io:format("Recieved EXIT (~p, ~p), but out bursts~n", [Pid, Reason]),
+		    shutdown_everything(Room, Bots);
+		no ->
+		    case {known_bot(Pid, Bots), Pid} of
+			{{yes, M,F,A},_} ->
+			    io:format("Bot crashed, ~p:~p(~p), with reason: ~p.  Restarting bot~n",
+				      [M,F,A, Reason]),
+			    ?MODULE:loop(fire_burst(BurstTank), Room, restart_bots(Bots));
+			{no, Room} ->
+			    io:format("The common room crashed with reason: ~p.  Killing Bots and restarting~n",
+				      [Reason]),
+			    kill_bots(Bots),
+			    start_the_common_room(fire_burst(BurstTank));
+			{no, _UnknownPid} ->
+			    io:format("Exit from unknown process: ~p, with reason: ~p~n", [Pid, Reason]),
+			    shutdown_everything(Room, Bots)
+		    end
+	    end;
+	refill_burst ->
+	    BurstTank2 = refill_burst(BurstTank),
+	    io:format("Burst refill recieved ~p~n", [BurstTank2]),
+	    ?MODULE:loop(BurstTank2, Room, Bots);
 	Msg ->
 	    io:format("Unknown msg: ~p~n",[Msg]),
-	    ?MODULE:loop({Room, Echo})
+	    shutdown_everything(Room, Bots)
     end.
 
+empty(N) when N =< 0 ->
+    yes;
+empty(_) ->
+    no.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fire_burst(N) when N =< 0 ->
+    out_of_bursts;
+fire_burst(N) ->
+    call_for_a_refill(),
+    N-1.
 
-echo() ->
-    spawn_link(?MODULE, echo2, [common_room]).
-
-echo2(Room) ->
-    Room ! {join, self()},
-    echo3(Room).
-
-echo3(Room) ->
-    receive
-	Msg ->
-	    io:format("=== ECHO: ~p~n", [Msg]),
-	    ?MODULE:echo3(Room)
+refill_burst(N) ->
+    case N+1 of
+	?FULL_BURST_TANK ->
+	    ?FULL_BURST_TANK;
+	N2 ->
+	    call_for_a_refill(),
+	    N2
     end.
 
+call_for_a_refill() ->
+    erlang:send_after(?REFILL_RATE, self(), refill_burst).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-start_snapshotter() ->
-    spawn(?MODULE, init_snapshotter, []).
-
-call(Pid, Msg) ->
-    Pid ! Msg,
-    receive
-	{ok, Res} ->
-	    Res;
-	ok ->
-	    ok
-    after
-	100 ->
-	    timeout
+known_bot(Pid, Bots) ->
+    case [Spec || {BotPid, _, _, _} = Spec <- Bots, Pid == BotPid] of
+	[] ->
+	    no;
+	[{Pid, M,F,A}] ->
+	    {yes, M,F,A}
     end.
 
-diff() ->
-    call(snapshotter, {diff, self()}).
+shutdown_everything(Room, Bots) ->
+    io:format("shutting down everything~n"),
+    kill_bots(Bots),
+    exit(Room, shutdown),
+    exit(shutdown).
 
-snapshot() ->
-    call(snapshotter, {snapshot, self()}).
-
-init_snapshotter() ->
-    process_flag(trap_exit, true),
-    true = erlang:register(snapshotter, self()),
-    loop_snapshotter(processes()).
-
-loop_snapshotter(Processen) ->
-    receive
-	{diff, Pid} ->
-	    Diff = processes() -- Processen,
-	    Pid ! {ok, [process_details(P) || P <- Diff]},
-	    ?MODULE:loop_snapshotter(Processen);
-	{snapshot, Pid} ->
-	    Pid ! ok,
-	    ?MODULE:loop_snapshotter(processes());
-	Msg ->
-	    io:format("Not understood: ~p~n", [Msg]),
-	    ?MODULE:loop_snapshotter(Processen)
-    after
-	300 ->
-	    ?MODULE:loop_snapshotter(Processen)
-    end.
-
-process_details(Process) ->
-    InitCall = case process_info(Process, dictionary) of
-		   undefined ->
-		       unknown;
-		   {dictionary, Props} ->
-		       lists:keyfind('$initial_call', 1, Props)
-	       end,
-    {Process,
-     process_info(Process, registered_name),
-     InitCall}.
+kill_bots(Bots) ->
+    [begin unlink(BotPid), exit(BotPid, kill) end || {BotPid, _,_,_} <- Bots].
