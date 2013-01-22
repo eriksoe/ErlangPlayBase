@@ -36,7 +36,7 @@ loop(ChatRoom) ->
         _ ->
             ok
     end,
-    ?MODULE:loop(ChatRoom).
+    loop(ChatRoom).
 
 timeunit_in_ms("ms") -> ms;
 timeunit_in_ms("s") -> 1000;
