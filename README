@@ -30,3 +30,9 @@ Remote shell:
 
   $> erl -pa ebin -name remote@<IP-address> -remsh <your-name>@<IP-address>
 
+Starting chat client:
+
+  $> erl -pa ebin -name <your-name>@<IP-address>
+  > net_adm:ping('chatserver@<IP...>').
+  > nodes(). # should return a list of visible node names
+  > chat_client:start(chatroom:global_chatroom()).

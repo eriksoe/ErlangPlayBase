@@ -3,7 +3,7 @@
 
 -define(FULL_BURST_TANK, 2).
 -define(REFILL_RATE, 10000).
--define(ROOM_NAME, common_room).
+-define(ROOM_NAME, chatroom).
 
 start_link() ->
     proc_lib:start_link(?MODULE, init, []).
@@ -21,7 +21,7 @@ init() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 start_the_common_room(BurstTank) ->
-    Room = chatroom:start_link({local, ?ROOM_NAME}),
+    Room = chatroom:start_link({global, ?ROOM_NAME}),
     ?MODULE:loop(BurstTank, Room, restart_bots(create_bot_MFAs(Room))).
 
 restart_bots(Bots) ->
