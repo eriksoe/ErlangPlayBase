@@ -8,10 +8,6 @@
 start_link() ->
     proc_lib:start_link(?MODULE, init, []).
 
-bot_specs(Room) ->
-    [{echo_bot, start_link, Room},
-     {alarm_bot, start_link, Room}].
-
 init() ->
     erlang:process_flag(trap_exit, true),
     %% TODO global registration
@@ -19,28 +15,34 @@ init() ->
     proc_lib:init_ack(self()),
     start_the_common_room(?FULL_BURST_TANK).
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Starting and restarting chatroom and bots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 start_the_common_room(BurstTank) ->
     Room = chatroom:start_link({local, ?ROOM_NAME}),
-    ?MODULE:loop(BurstTank, Room, restart_bots(bot_specs(Room))).
+    ?MODULE:loop(BurstTank, Room, restart_bots(create_bot_MFAs(Room))).
 
-restart_bots(BotSpecs) ->
-    [maybe_start_bot(BotSpec) || BotSpec <- BotSpecs].
+restart_bots(Bots) ->
+    [maybe_start_bot(Bot) || Bot <- Bots].
 
 maybe_start_bot({M,F,A}) ->
     io:format("Starting bot: ~p, ~p, ~p~n", [M,F,A]),
     case M:F(A) of
-	{ok, Pid} ->
-	    {Pid, M,F,A};
-	Pid when is_pid(Pid) -> 
-	    {Pid, M,F,A}
+	{ok, Pid}            -> {Pid, M,F,A};
+	Pid when is_pid(Pid) -> {Pid, M,F,A}
     end;
 maybe_start_bot({Pid, M,F,A} = Bot) when is_pid(Pid) ->
     case is_process_alive(Pid) of
-	true ->
-	    Bot;
-	false ->
-	    maybe_start_bot({M,F,A})
+	true  -> Bot;
+	false -> maybe_start_bot({M,F,A})
     end.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Server loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 loop(BurstTank, Room, Bots) ->
     receive
@@ -74,36 +76,30 @@ loop(BurstTank, Room, Bots) ->
 	    shutdown_everything(Room, Bots)
     end.
 
-empty(N) when N =< 0 ->
-    yes;
-empty(_) ->
-    no.
 
-fire_burst(N) when N =< 0 ->
-    out_of_bursts;
-fire_burst(N) ->
-    call_for_a_refill(),
-    N-1.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Handling bursts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+empty(N) when N =< 0 -> yes;
+empty(_)             -> no.
+
+fire_burst(N) when N > 0 ->
+    call_for_a_refill(N-1).
 
 refill_burst(N) ->
-    case N+1 of
-	?FULL_BURST_TANK ->
-	    ?FULL_BURST_TANK;
-	N2 ->
-	    call_for_a_refill(),
-	    N2
-    end.
+    call_for_a_refill(N+1).
 
-call_for_a_refill() ->
-    erlang:send_after(?REFILL_RATE, self(), refill_burst).
+call_for_a_refill(N) when N == ?FULL_BURST_TANK ->
+    N;
+call_for_a_refill(N) when N < ?FULL_BURST_TANK ->
+    erlang:send_after(?REFILL_RATE, self(), refill_burst),
+    N.
 
-known_bot(Pid, Bots) ->
-    case [Spec || {BotPid, _, _, _} = Spec <- Bots, Pid == BotPid] of
-	[] ->
-	    no;
-	[{Pid, M,F,A}] ->
-	    {yes, M,F,A}
-    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Shutdown %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 shutdown_everything(Room, Bots) ->
     io:format("shutting down everything~n"),
@@ -111,5 +107,27 @@ shutdown_everything(Room, Bots) ->
     exit(Room, shutdown),
     exit(shutdown).
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Handling bots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% This is where you add new bots under the supervisor
+create_bot_MFAs(Room) ->
+    [{echo_bot, start_link, Room},
+     {alarm_bot, start_link, Room}].
+
+known_bot(Pid, Bots) ->
+    case [Bot || {BotPid, _, _, _} = Bot <- Bots, Pid == BotPid] of
+	[] ->
+	    no;
+	[{_Pid, M,F,A}] ->
+	    {yes, M,F,A}
+    end.
+
 kill_bots(Bots) ->
     [begin unlink(BotPid), exit(BotPid, kill) end || {BotPid, _,_,_} <- Bots].
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% EOF %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
