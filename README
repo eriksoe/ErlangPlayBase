@@ -2,7 +2,7 @@
 Basis project for Erlang GOTONight;
 ===================================
 
-Searchable documentation site: http://www.erlang.org/erldoc?q=make&x=0&y=0
+Searchable documentation site: http://www.erlang.org/erldoc
 
 
 All commands below assume you are standing in the root directory of ErlangPlayBase.
@@ -28,7 +28,7 @@ Distributed shell:
 
 Remote shell:
 
-  $> erl -pa ebin -name remote@<IP-address> -remsh <your-name>@<IP-address>
+  $> erl -pa ebin -name tmp@<IP-address> -remsh <remote-node>@<IP-address>
 
 Starting chat client:
 
@@ -36,3 +36,4 @@ Starting chat client:
   > net_adm:ping('chatserver@<IP...>').
   > nodes(). # should return a list of visible node names
   > chat_client:start(chatroom:global_chatroom()).
+
