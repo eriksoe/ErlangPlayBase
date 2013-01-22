@@ -38,7 +38,7 @@ loop(ChatRoom) ->
     end,
     loop(ChatRoom).
 
-timeunit_in_ms("ms") -> ms;
+timeunit_in_ms("ms") -> 1;
 timeunit_in_ms("s") -> 1000;
 timeunit_in_ms("m") -> 1000*60;
 timeunit_in_ms("h") -> 1000*60*60.
