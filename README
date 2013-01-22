@@ -1,3 +1,38 @@
-Basis project for Erlang GeekNight
-==================================
 
+Basis project for Erlang GOTONight;
+===================================
+
+Searchable documentation site: http://www.erlang.org/erldoc?q=make&x=0&y=0
+
+
+All commands below assume you are standing in the root directory of ErlangPlayBase.
+
+  $> means OS shell
+  >  means erlang shell
+
+Command line compilation:
+
+  $> erl -make
+
+Erl compilation:
+
+  > make:all([load]).
+
+Single-node shell:
+
+  $> erl -pa ebin
+
+Distributed shell:
+
+  $> erl -pa ebin -name <your-name>@<IP-address>
+
+Remote shell:
+
+  $> erl -pa ebin -name remote@<IP-address> -remsh <your-name>@<IP-address>
+
+Starting chat client:
+
+  $> erl -pa ebin -name <your-name>@<IP-address>
+  > net_adm:ping('chatserver@<IP...>').
+  > nodes(). # should return a list of visible node names
+  > chat_client:start(chatroom:global_chatroom()).
