@@ -7,7 +7,7 @@ Searchable documentation site: http://www.erlang.org/erldoc?q=make&x=0&y=0
 
 All commands below assume you are standing in the root directory of ErlangPlayBase.
 
-  $> means unix shell
+  $> means OS shell
   >  means erlang shell
 
 Command line compilation:
