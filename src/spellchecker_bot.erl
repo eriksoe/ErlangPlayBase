@@ -20,7 +20,7 @@ init(ChatRoom, DictFilename) ->
     {ok,BinDict} = file:read_file(DictFilename),
     BinWords = binary:split(BinDict, <<"\n">>, [global,trim]),
     lists:foreach(fun(W) ->
-                          Key = string:to_lower(binary_to_list(W)),
+                          Key = string:to_lower(unicode:characters_to_list(W, utf8)),
                           ets:insert(DictTable, {Key}) end,
                   BinWords),
     proc_lib:init_ack(self()),
