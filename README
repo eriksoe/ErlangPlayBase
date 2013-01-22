@@ -24,16 +24,18 @@ Single-node shell:
 
 Distributed shell:
 
-  $> erl -pa ebin -name <your-name>@<IP-address>
+  $> erl -pa ebin -name <your-name>@<IP-address> -setcookie omnomnom
 
 Remote shell:
 
-  $> erl -pa ebin -name tmp@<IP-address> -remsh <remote-node>@<IP-address>
+  $> erl -pa ebin -name tmp@<IP-address> -remsh <remote-node>@<IP-address> -setcookie omnomnom
 
 Starting chat client:
 
-  $> erl -pa ebin -name <your-name>@<IP-address>
+  $> erl -pa ebin -name <your-name>@<IP-address> -setcookie omnomnom
   > net_adm:ping('chatserver@<IP...>').
   > nodes(). # should return a list of visible node names
-  > chat_client:start(chatroom:global_chatroom()).
+  > CR = chatroom:global_chatroom().
+  > chat_client:start(CR).
+
 
