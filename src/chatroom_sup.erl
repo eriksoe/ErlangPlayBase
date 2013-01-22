@@ -1,9 +1,19 @@
 -module(chatroom_sup).
--export([start_link/0, init/0, loop/3]).
+-export([start_link/0, init/0, loop/3, ping/0]).
 
 -define(FULL_BURST_TANK, 2).
 -define(REFILL_RATE, 10000).
 -define(ROOM_NAME, chatroom).
+
+ping() ->
+    ?MODULE ! {ping, self()},
+    receive
+	pong ->
+	    pong
+    after
+	100 ->
+	    timeout
+    end.
 
 start_link() ->
     proc_lib:start_link(?MODULE, init, []).
@@ -13,14 +23,14 @@ init() ->
     %% TODO global registration
     true = erlang:register(?MODULE, self()),
     proc_lib:init_ack(self()),
-    start_the_common_room(?FULL_BURST_TANK).
+    start_the_room(?FULL_BURST_TANK).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Starting and restarting chatroom and bots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-start_the_common_room(BurstTank) ->
+start_the_room(BurstTank) ->
     Room = chatroom:start_link({global, ?ROOM_NAME}),
     ?MODULE:loop(BurstTank, Room, restart_bots(create_bot_MFAs(Room))).
 
@@ -28,7 +38,7 @@ restart_bots(Bots) ->
     [maybe_start_bot(Bot) || Bot <- Bots].
 
 maybe_start_bot({M,F,A}) ->
-    io:format("Starting bot: ~p, ~p, ~p~n", [M,F,A]),
+    io:format("*** Starting bot: ~p, ~p, ~p~n", [M,F,A]),
     case M:F(A) of
 	{ok, Pid}            -> {Pid, M,F,A};
 	Pid when is_pid(Pid) -> {Pid, M,F,A}
@@ -46,33 +56,36 @@ maybe_start_bot({Pid, M,F,A} = Bot) when is_pid(Pid) ->
 
 loop(BurstTank, Room, Bots) ->
     receive
+	{ping, Pid} ->
+	    Pid ! pong,
+	    ?MODULE:loop(BurstTank, Room, Bots);
 	{'EXIT', Pid, Reason} ->
 	    case empty(BurstTank) of
 		yes ->
-		    io:format("Recieved EXIT (~p, ~p), but out bursts~n", [Pid, Reason]),
+		    io:format("*** Received EXIT (~p, ~p), but out of bursts~n", [Pid, Reason]),
 		    shutdown_everything(Room, Bots);
 		no ->
 		    case {known_bot(Pid, Bots), Pid} of
 			{{yes, M,F,A},_} ->
-			    io:format("Bot crashed, ~p:~p(~p), with reason: ~p.  Restarting bot~n",
+			    io:format("*** Bot crashed, ~p:~p(~p), with reason: ~p.  Restarting bot~n",
 				      [M,F,A, Reason]),
 			    ?MODULE:loop(fire_burst(BurstTank), Room, restart_bots(Bots));
 			{no, Room} ->
-			    io:format("The common room crashed with reason: ~p.  Killing Bots and restarting~n",
+			    io:format("*** The room crashed with reason: ~p.  Killing Bots and restarting~n",
 				      [Reason]),
 			    kill_bots(Bots),
-			    start_the_common_room(fire_burst(BurstTank));
+			    start_the_room(fire_burst(BurstTank));
 			{no, _UnknownPid} ->
-			    io:format("Exit from unknown process: ~p, with reason: ~p~n", [Pid, Reason]),
+			    io:format("*** Exit from unknown process: ~p, with reason: ~p~n", [Pid, Reason]),
 			    shutdown_everything(Room, Bots)
 		    end
 	    end;
 	refill_burst ->
 	    BurstTank2 = refill_burst(BurstTank),
-	    io:format("Burst refill recieved ~p~n", [BurstTank2]),
+	    io:format("*** Burst refill received. Refills: ~p~n", [BurstTank2]),
 	    ?MODULE:loop(BurstTank2, Room, Bots);
 	Msg ->
-	    io:format("Unknown msg: ~p~n",[Msg]),
+	    io:format("*** Unknown msg: ~p~n",[Msg]),
 	    shutdown_everything(Room, Bots)
     end.
 
@@ -102,7 +115,7 @@ call_for_a_refill(N) when N < ?FULL_BURST_TANK ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 shutdown_everything(Room, Bots) ->
-    io:format("shutting down everything~n"),
+    io:format("*** shutting down everything~n"),
     kill_bots(Bots),
     exit(Room, shutdown),
     exit(shutdown).
@@ -114,8 +127,9 @@ shutdown_everything(Room, Bots) ->
 
 %% This is where you add new bots under the supervisor
 create_bot_MFAs(Room) ->
-    [{echo_bot, start_link, Room},
-     {alarm_bot, start_link, Room}].
+    [{echo_bot,           start_link, Room},
+     {console_logger_bot, start_link, Room},
+     {alarm_bot,          start_link, Room}].
 
 known_bot(Pid, Bots) ->
     case [Bot || {BotPid, _, _, _} = Bot <- Bots, Pid == BotPid] of
