@@ -1,26 +1,6 @@
 -module(epb_utils).
 -compile([export_all]).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Misc development helper functionallity %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%% shell echo bot %%%%%
-
-echo(Pid) ->
-    spawn_link(?MODULE, echo2, [Pid]).
-
-echo2(Room) ->
-    Room ! {join, self()},
-    echo3(Room).
-
-echo3(Room) ->
-    receive
-	Msg ->
-	    io:format("=== ECHO: ~p~n", [Msg]),
-	    ?MODULE:echo3(Room)
-    end.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% Find new processes %%%%%%
