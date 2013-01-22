@@ -1,3 +1,27 @@
-Basis project for Erlang GeekNight
-==================================
 
+Basis project for Erlang GOTONight;
+===================================
+
+Library search (for 'make'):
+
+  http://www.erlang.org/erldoc?q=make&x=0&y=0
+
+Command line compilation:
+
+  $> erl -make
+
+Single-node shell:
+
+  $> erl -pa ebin
+
+Distributed shell:
+
+  $> erl -pa ebin -name <your-name>@<IP-address>
+
+Remote shell:
+
+  $> erl -pa ebin -name remote@<IP-address> -remsh <your-name>@<IP-address>
+
+Erl compilation:
+
+  > make:all([load]).
