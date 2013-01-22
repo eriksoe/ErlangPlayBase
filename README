@@ -2,7 +2,7 @@
 Basis project for Erlang GOTONight;
 ===================================
 
-Searchable documentation site: http://www.erlang.org/erldoc?q=make&x=0&y=0
+Searchable documentation site: http://www.erlang.org/erldoc
 
 
 All commands below assume you are standing in the root directory of ErlangPlayBase.
