@@ -36,3 +36,4 @@ Starting chat client:
   > net_adm:ping('chatserver@<IP...>').
   > nodes(). # should return a list of visible node names
   > chat_client:start(chatroom:global_chatroom()).
+
