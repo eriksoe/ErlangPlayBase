@@ -30,14 +30,13 @@ loop(ChatRoom) ->
                 {match, [AmountStr, TimeUnit, AlarmMsg]} ->
                     Millis =
                         list_to_integer(AmountStr) * timeunit_in_ms(TimeUnit),
-                    erlang:send_after(Millis, ChatRoom,
-                                      ?SAY_PREFIX++AlarmMsg),
+                    timer:send_after(Millis, ChatRoom, ?SAY_PREFIX++AlarmMsg),
                     ChatRoom ! ?SAY_PREFIX++"Started a timer."
             end;
         _ ->
             ok
     end,
-    loop(ChatRoom).
+    ?MODULE:loop(ChatRoom).
 
 timeunit_in_ms("ms") -> ms;
 timeunit_in_ms("s") -> 1000;
