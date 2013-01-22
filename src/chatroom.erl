@@ -9,8 +9,7 @@
 -export([init/1]).
 
 -record(subscriber, {
-          pid :: pid(),
-          monitor_ref :: reference()
+          pid :: pid()
 }).
 -record(state, {
           subscribers :: #subscriber{}
@@ -31,6 +30,7 @@ global_chatroom() ->
 %%%========== Internal functions: ==============================
 
 init(Name) ->
+    process_flag(trap_exit, true),
     case Name of
         [] ->
             ok;
@@ -48,16 +48,16 @@ loop(State) ->
             loop(add_subscriber(State, Pid));
         {leave, Pid} when is_pid(Pid) ->
             loop(remove_subscriber(State, Pid, left));
-        {'DOWN', _MonitorRef, process, Pid, Info} ->
-            loop(remove_subscriber(State, Pid, Info));
+        {'EXIT', Pid, ExitReason} ->
+            loop(remove_subscriber(State, Pid, ExitReason));
         Msg ->
             publish(State, Msg),
             loop(State)
     end.
 
 add_subscriber(State=#state{subscribers=Subs}, Pid) ->
-    MRef = erlang:monitor(process, Pid),
-    NewSubscriber = #subscriber{pid=Pid, monitor_ref=MRef},
+    link(Pid), % So that the bot will die when the room disappears
+    NewSubscriber = #subscriber{pid=Pid},
     State2 = State#state{subscribers=[NewSubscriber|Subs]},
 
     error_logger:info_msg("Joined: ~p\n", [Pid]),
