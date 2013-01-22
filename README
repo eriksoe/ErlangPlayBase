@@ -28,7 +28,7 @@ Distributed shell:
 
 Remote shell:
 
-  $> erl -pa ebin -name remote@<IP-address> -remsh <your-name>@<IP-address>
+  $> erl -pa ebin -name tmp@<IP-address> -remsh <remote-node>@<IP-address>
 
 Starting chat client:
 
