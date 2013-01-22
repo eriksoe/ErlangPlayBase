@@ -80,24 +80,3 @@ process_details(Process) ->
      process_info(Process, current_function),
      process_info(Process, initial_call),
      InitCall}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%% Simple make all tool - compile and load from the shell %%%%%
-
-make() ->
-    {ok, Files} = file:list_dir("src"),
-    Modules = [list_to_atom(filename:basename(F, ".erl")) || F <- Files, ".erl" == string:right(F,4)],
-    Results = [{compile_and_load(M), M} || M <- Modules],
-    [R || R <- Results , case R of {ok, _, _} -> true; _ -> false end].
-
-compile_and_load(M) ->
-    case compile:file("src/"++atom_to_list(M), [{outdir, "ebin/"}, return_errors, return_warnings]) of
-	{ok, _} -> aha;
-	{ok, _, _} ->
-	    code:purge(M),
-	    code:delete(M),
-	    code:load_file(M),
-	    ok;
-	Msg ->
-	    Msg
-    end.
