@@ -1,7 +1,8 @@
 
 * Welcome & outline
+** Trifork
+** Check abilities (functional coding? Erlang syntax?)
 ** The plan: to setup up and play with a distributed system (chatroom-ish)
-* Check abilities (functional coding? Erlang syntax?)
 * No-tamper promise
 
 ** Setup - software (Erlang; editor) & net
