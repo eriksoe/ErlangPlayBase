@@ -10,6 +10,10 @@ All commands below assume you are standing in the root directory of ErlangPlayBa
   $> means OS shell
   >  means erlang shell
 
+Clone todays project:
+
+  $> git clone git://github.com/eriksoe/ErlangPlayBase.git
+
 Command line compilation:
 
   $> erl -make
