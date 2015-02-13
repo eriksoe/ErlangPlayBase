@@ -32,12 +32,14 @@ global_chatroom() ->
 init(Name) ->
     process_flag(trap_exit, true),
     case Name of
-        [] ->
+        noname ->
             ok;
         {global, GName} ->
             yes = global:register_name(GName, self());
         {local,LName} ->
-            erlang:register(LName, self())
+            erlang:register(LName, self());
+        Name ->
+            erlang:register(Name, self())
     end,
     proc_lib:init_ack(self()),
     loop(#state{subscribers=[]}).
