@@ -1,1 +1,3 @@
-{'src/*', [{outdir, "ebin"}]}.
+
+{'src/*',  [{outdir, "ebin"}]}.
+{'test/*', [{outdir, "test"}]}.
