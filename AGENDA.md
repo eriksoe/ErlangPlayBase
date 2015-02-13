@@ -38,6 +38,8 @@ Erlang essentials
 - Data are immutable
 - Variables are single-assignment
 - Strings are lists of charpoints (integers)
+- Lightweight processes
+- Message send will copy the data being sent
 
 
 Abstract
