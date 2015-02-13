@@ -42,7 +42,19 @@ Erlang essentials
 - Message send will copy the data being sent
 
 
-Abstract
-========
+Abstract -- Hands-on Erlang
+===========================
 
-TODO
+Want to learn about Erlang?  Join us for a late afternoon session
+where your will write some actually Erlang code.  To have a place to
+start we have made a small chat application
+(https://github.com/eriksoe/ErlangPlayBase) which will form the basis
+for this hands-on session.
+
+Your should bring your own laptop with Erlang already installed (for
+install instructions go here:
+https://www.erlang-solutions.com/downloads/download-erlang-otp).  If
+you are not able to bring a laptop, we will try to pair you up with
+another participant.
+
+We look forward to see you.
