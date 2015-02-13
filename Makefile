@@ -1,6 +1,5 @@
 all: compile
 
-
 compile:
 	-@mkdir -p ebin
 	erlc -o ebin src/*.erl
@@ -21,6 +20,4 @@ start_global: compile
 test: compile
 	erl -noshell -pa ebin test -eval 'chatroom_crude_test:test(), init:stop().'
 
-
 .PHONY: all compile clean start test
-
