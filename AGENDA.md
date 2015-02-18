@@ -20,27 +20,7 @@ Agenda
 
 - Free Play
   - (Pair up if appropriate)
-  - Suggestions for things to do:
-    - A monster bot for fighting with, with HP/respawn and stuff
-    - Chatroom/chat client: join with names, show who says what
-    - Chatroom/chat client: private messaging
-    - Chatroom: listing participants
-    - Read some of the code
-    - Dice bot  (simple or "roll 2d8")
-    - Fight simulator (combat rules implementation)
-    - Simple math: Primality tester; Fibonacci; ...
-    - Storage bot (remember/recall/forget)
-    - Quiz bot
-    - Dictionary bot (e.g. using an online dictionary)
-    - Word generator bot
-    - Indian name generator
-    - Anagram bot
-    - 1337 sp34k bot
-    - Maze bot
-    - Palindrome recognizer (single word/multiple words)
-    - Grep bot
-    - Hanoi puzzle
-    - Eliza clone
+  - Suggestions for things to do: See the INSPIRATION file.
 
 Erlang essentials
 -----------------

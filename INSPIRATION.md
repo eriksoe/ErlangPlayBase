@@ -1,0 +1,35 @@
+Inspiration for things to do:
+=============================
+
+- Read some of the code
+- Chat extensions:
+  - Chatroom/chat client: join with names, show who says what
+  - Chatroom/chat client: private messaging
+  - Chatroom: listing participants
+- Bots implementing simple functions:
+  - Storage bot (remember/recall/forget)
+  - History search bot
+- Fun with numbers:
+  - Dice bot  (simple or "roll 2d8")
+  - Simple math: Primality tester; Fibonacci; ...
+  - Calculator bot
+  - Boolean calculator bot
+  - Matrix calculator bot
+- Fun with language:
+  - Dictionary bot (e.g. using an online dictionary)
+  - Quiz bot
+  - Word generator bot
+  - Indian name generator
+  - Anagram bot
+  - 1337 sp34k bot
+  - Palindrome recognizer (single word/multiple words)
+  - Band name generator/recognizer
+- Games:
+  - A monster bot for fighting with, with HP/respawn and stuff
+  - Fight simulator (combat rules implementation)
+  - Maze bot
+  - Hanoi puzzle
+  - Twenty Questions game
+  - Vector rally game
+- Challenges:
+  - Eliza clone
