@@ -9,8 +9,9 @@ Agenda
     (chatroom-ish). Note, no-tamper promise
 
 - Chat demo - presenting the chatroom, demoing the client
-  - The chatroom protocol: {join,self()} + normal messages
-  - (Publish-subscriber pattern)
+  - Demo
+  - Archtecture diagram
+    - The chatroom protocol: {join,self()} + normal messages
   - Chat note: about non-use of OTP
     To keep it simple and focus on the language and core model
 
