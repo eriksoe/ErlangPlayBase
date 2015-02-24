@@ -22,6 +22,7 @@ Agenda
   - Setup - software (Erlang; editor) & net
   - (Pair up if appropriate)
   - Suggestions for things to do: See the INSPIRATION file.
+  - See src/cheatsheet.erl for some common code samples
 
 Erlang essentials
 -----------------
