@@ -7,7 +7,6 @@ Agenda
   - Check abilities (functional coding? Erlang syntax?)
   - The plan: to setup up and play with a distributed system
     (chatroom-ish). Note, no-tamper promise
-  - Setup - software (Erlang; editor) & net
 
 - Chat demo - presenting the chatroom, demoing the client
   - The chatroom protocol: {join,self()} + normal messages
@@ -19,6 +18,7 @@ Agenda
   - A bit of Erlang syntax
 
 - Free Play
+  - Setup - software (Erlang; editor) & net
   - (Pair up if appropriate)
   - Suggestions for things to do: See the INSPIRATION file.
 
